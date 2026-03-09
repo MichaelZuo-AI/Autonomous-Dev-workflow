@@ -1,9 +1,12 @@
-# Screen Definitions — [App Name]
+# UI Definitions — [App Name]
 
-## Screen: [Screen Name]
+> For web apps, mobile apps, or any project with a user interface.
+> Skip this file for backend-only / CLI projects.
+
+## Page/Screen: [Name]
 
 **Route:** `/[route-path]`
-**Parent:** [Parent screen or "root"]
+**Parent:** [Parent page or "root"]
 
 ### States
 
@@ -24,9 +27,9 @@
 
 | Action | Destination |
 |--------|------------|
-| Tap [element] | Navigate to [screen] |
-| Swipe back | Return to [screen] |
+| Click/tap [element] | Navigate to [page/screen] |
+| Back | Return to [page/screen] |
 
 ---
 
-<!-- Repeat for each screen -->
+<!-- Repeat for each page/screen -->

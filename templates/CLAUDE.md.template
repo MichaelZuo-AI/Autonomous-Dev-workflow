@@ -4,21 +4,22 @@
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Framework | [e.g., React Native / Expo] | [why] |
-| State management | [e.g., Zustand] | [why] |
-| Navigation | [e.g., Expo Router] | [why] |
-| API layer | [e.g., React Query + Axios] | [why] |
-| Auth | [e.g., Expo SecureStore + JWT] | [why] |
-| Testing | [e.g., Jest + React Native Testing Library] | [why] |
+| Framework | [e.g., Next.js / Express / Expo] | [why] |
+| Language | [e.g., TypeScript] | [why] |
+| State management | [e.g., Zustand / Redux / Context] | [why] |
+| API layer | [e.g., React Query + Axios / tRPC] | [why] |
+| Auth | [e.g., NextAuth / JWT / OAuth] | [why] |
+| Testing | [e.g., Vitest / Jest + Testing Library] | [why] |
+| Database | [e.g., PostgreSQL / SQLite / none] | [why] |
 
 ## Code Navigation Map
 
 ```
 src/
 ├── features/        # Feature-scoped modules
-├── components/ui/   # Design system components (Storybook-driven)
+├── components/      # Shared UI components
 ├── domain/          # Core business logic
-├── services/        # API clients
+├── services/        # API clients / external integrations
 └── constants/       # No magic strings
 ```
 
@@ -30,11 +31,10 @@ src/
 
 ## Conventions (MUST follow)
 
-- Component pattern: see `src/components/ui/Button.tsx` as reference
-- Error handling: use `Result<T, E>` pattern (never throw)
-- Every component requires: snapshot test + behavior test
+- [Component / module pattern]: see `src/[path]` as reference
+- Error handling: [chosen pattern, e.g., Result<T, E>, try/catch, error boundaries]
+- Every module requires: [test expectations, e.g., unit test + integration test]
 - No magic strings — use constants from `src/constants/`
-- All styles must use design tokens from `DESIGN_TOKENS.md`
 
 ## Gotchas & Lessons Learned
 

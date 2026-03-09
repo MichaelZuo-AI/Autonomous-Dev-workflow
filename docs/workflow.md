@@ -1,4 +1,4 @@
-# E2E Mobile App Development Workflow with Claude Code
+# E2E Development Workflow with Claude Code
 
 > **Goal:** 100% coding by Claude Code — human intervention becomes the exception, not the norm.
 
@@ -7,7 +7,7 @@
 ## Overall Architecture
 
 ```
-L1: Specification Layer        Define what to build (specs, screens, API, acceptance criteria)
+L1: Specification Layer        Define what to build (specs, screens/pages, API, acceptance criteria)
 L2: Context Management Layer   Maintain project knowledge across sessions (CLAUDE.md, handoffs)
 L3: Execution Loop Layer       Standardized implement → verify → commit cycle
 L4: Verification Layer         Automated quality gates (types, lint, tests, build, visual)
@@ -25,7 +25,7 @@ L5: Feedback & Recovery Layer  Error classification, auto-fix, escalation protoc
 | File | Purpose |
 |------|---------|
 | `specs/PRD.md` | Structured product requirements in Given/When/Then format |
-| `specs/SCREENS.md` | State machine for every screen (loading/empty/error/success) |
+| `specs/SCREENS.md` | State machine for every screen/page (loading/empty/error/success) |
 | `specs/API.yaml` | OpenAPI spec — the data contract Claude codes against |
 | `specs/DESIGN_TOKENS.md` | Color, typography, spacing system — no freestyle styling |
 | `specs/ACCEPTANCE.md` | Executable acceptance criteria, maps 1:1 to test cases |
@@ -33,7 +33,7 @@ L5: Feedback & Recovery Layer  Error classification, auto-fix, escalation protoc
 ### Principles
 
 - Write PRD in **Given / When / Then** format to eliminate ambiguity
-- Every screen must enumerate all states: `loading` / `empty` / `error` / `success`
+- Every UI state must enumerate all states: `loading` / `empty` / `error` / `success`
 - Acceptance criteria must map 1:1 to automated test cases
 
 ---
@@ -81,8 +81,8 @@ Every task session ends with a `HANDOFF.md` containing:
 1. Load Context       → CLAUDE.md + task spec + HANDOFF
 2. Pre-flight Check   → dependencies complete, tests baseline exists, branch clean
 3. Implement          → code generation following conventions
-4. Self-Verify        → tsc + eslint + jest → auto-fix up to 3x on failure
-5. Integration Verify → build + simulator smoke test + screenshot
+4. Self-Verify        → typecheck + lint + test → auto-fix up to 3x on failure
+5. Integration Verify → build + smoke test (UI screenshot if applicable)
 6. Commit + Update    → git commit, update CLAUDE.md, write HANDOFF
 ```
 
@@ -91,7 +91,6 @@ Every task session ends with a `HANDOFF.md` containing:
 | Script | Purpose |
 |--------|---------|
 | `scripts/verify.sh` | Pre-commit: type check + lint + test + build |
-| `scripts/simulator-smoke.sh` | Capture simulator screenshot for visual check |
 
 ---
 
@@ -100,16 +99,16 @@ Every task session ends with a `HANDOFF.md` containing:
 ### Three Tiers
 
 **Tier 1 — Code Correctness** (fully automated)
-- `tsc --noEmit` + `eslint .` + `jest --coverage`
+- Type check + lint + test with coverage
 
 **Tier 2 — Build Verification** (automated with error classification)
 - Missing dependency → auto-install
 - Config error → consult CLAUDE.md + fix
-- Native module issue → pattern match known fixes
+- Platform-specific issue → pattern match known fixes
 - Unknown error → escalate to human
 
-**Tier 3 — UI/Visual Verification** (progressive automation)
-- Phase 1: Storybook components + design token constraints
+**Tier 3 — UI/Visual Verification** (progressive automation, for frontend projects)
+- Phase 1: Component isolation (Storybook) + design token constraints
 - Phase 2: Screenshot + Vision API comparison against design spec
 - Phase 3: Full automated visual regression
 
@@ -124,7 +123,7 @@ Every task session ends with a `HANDOFF.md` containing:
 | **1 — Self-Healing** | Lint/type/test errors | Auto-fix → rerun (max 3x) | Same session |
 | **2 — Context Reload** | Build errors with clear messages | Parse error → search docs → fix | Same session |
 | **3 — Task Decomposition** | Scope too large, quality degradation | Split into smaller units, re-queue | Next session |
-| **4 — Human Escalation** | Native crashes, env issues, 3 failed attempts | Log context → pause → human fixes | 1 business day |
+| **4 — Human Escalation** | Platform crashes, env issues, 3 failed attempts | Log context → pause → human fixes | 1 business day |
 
 ### Escalation Protocol
 
