@@ -1,0 +1,24 @@
+# Escalation — [YYYY-MM-DD] — [task name]
+
+## Error
+
+```
+[Full error message and stack trace]
+```
+
+## What was attempted
+
+1. [Attempt 1 — description + result]
+2. [Attempt 2 — description + result]
+3. [Attempt 3 — description + result]
+
+## Context for human
+
+- **Relevant files:** [list]
+- **Suspected root cause:** [hypothesis]
+- **Suggested fix direction:** [if any]
+
+## Post-fix action required
+
+- [ ] Update CLAUDE.md with root cause + fix
+- [ ] Add regression test to prevent recurrence

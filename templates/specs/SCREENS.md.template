@@ -1,0 +1,32 @@
+# Screen Definitions — [App Name]
+
+## Screen: [Screen Name]
+
+**Route:** `/[route-path]`
+**Parent:** [Parent screen or "root"]
+
+### States
+
+| State | Condition | UI Behavior |
+|-------|-----------|-------------|
+| Loading | Data is being fetched | Skeleton / spinner |
+| Empty | No data available | Empty state illustration + CTA |
+| Error | Fetch failed | Error message + retry button |
+| Success | Data loaded | Render content |
+
+### Components
+
+| Component | Description | Interactive |
+|-----------|-------------|-------------|
+| [ComponentName] | [What it shows] | Yes / No |
+
+### Navigation
+
+| Action | Destination |
+|--------|------------|
+| Tap [element] | Navigate to [screen] |
+| Swipe back | Return to [screen] |
+
+---
+
+<!-- Repeat for each screen -->

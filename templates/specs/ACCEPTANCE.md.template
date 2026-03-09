@@ -1,0 +1,21 @@
+# Acceptance Criteria — [App Name]
+
+> Each criterion maps 1:1 to an automated test case. If it's not testable, rewrite it.
+
+## Feature: [Feature Name]
+
+| ID | Criterion | Test Type | Status |
+|----|-----------|-----------|--------|
+| AC-001 | [Given/When/Then statement] | Unit / Integration / E2E | Pending |
+| AC-002 | [Given/When/Then statement] | Unit / Integration / E2E | Pending |
+
+### Test Mapping
+
+| Acceptance ID | Test File | Test Name |
+|--------------|-----------|-----------|
+| AC-001 | `__tests__/feature.test.ts` | `should [behavior]` |
+| AC-002 | `__tests__/feature.test.ts` | `should [behavior]` |
+
+---
+
+<!-- Repeat for each feature -->

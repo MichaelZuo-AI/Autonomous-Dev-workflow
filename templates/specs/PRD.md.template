@@ -1,0 +1,28 @@
+# Product Requirements — [App Name]
+
+## Overview
+
+**Product:** [One-line description]
+**Target users:** [Who is this for]
+**Core value prop:** [Why they use it]
+
+---
+
+## Features
+
+### Feature: [Feature Name]
+
+**Priority:** P0 / P1 / P2
+
+**Given** [precondition]
+**When** [action]
+**Then** [expected outcome]
+**And** [additional outcome]
+
+**Given** [alternate/error precondition]
+**When** [action]
+**Then** [error handling outcome]
+
+---
+
+<!-- Repeat for each feature -->
