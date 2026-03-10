@@ -265,6 +265,16 @@ Stacks that maximize Claude's effectiveness:
 
 ---
 
+## Figma to Code Pipeline
+
+See **[FIGMA_TO_CODE.md](./FIGMA_TO_CODE.md)** — practical guide for shipping Figma designs to production code, including:
+- Designer Figma discipline (Auto Layout, Variables, naming)
+- Extraction methods (Dev Mode, plugins, REST API)
+- Claude refactoring raw output into production components
+- Token sync automation script
+
+---
+
 ## Templates
 
 FE-specific templates are in `templates/`:
