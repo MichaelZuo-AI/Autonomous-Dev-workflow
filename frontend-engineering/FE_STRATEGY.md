@@ -1,228 +1,383 @@
-# E2E Automated Frontend Development — Strategy Proposal
+# E2E Automated Frontend Development — System Proposal
 
-**Author:** Michael Zuo | **Date:** 2026-03-10 | **Status:** Draft — For VP Review
-
----
-
-## Executive Summary
-
-Frontend development is the most time-consuming part of our product cycle. Engineers spend 60-70% of their time on mechanical translation work — converting Figma designs into code, writing boilerplate, adjusting responsive layouts, fixing visual bugs. This proposal introduces an end-to-end automated pipeline that takes a Figma design and produces production-ready, tested, accessible frontend code — with AI (Claude Code) doing the implementation and humans focusing on design decisions and acceptance.
-
-**Expected outcome:** 3-5x faster design-to-production cycle, with equal or better code quality.
+**Author:** Michael Zuo | **Date:** 2026-03-10 | **Status:** Draft — Feasibility Review
 
 ---
 
-## Current State: Where Time Goes
+## System Overview
 
-A typical frontend feature today:
+An end-to-end system where **Figma designs flow into production-ready frontend code** through a fully automated pipeline. Designers work in Figma. AI generates implementation. Humans review and accept.
 
 ```
-Designer (2-3 days)          Engineer (5-8 days)              QA (2-3 days)
-─────────────────           ────────────────────             ──────────────
-Figma design        ──▶     Read design specs                Manual testing
-Responsive variants         Translate to components          Cross-browser check
-Design review               Write CSS/Tailwind styling       Responsive check
-                            Wire up state + API calls        Accessibility check
-                            Write tests (often skipped)      File bugs
-                            Fix visual bugs from QA    ◀──   ──────────────
-                            Fix responsive issues      ◀──
-                            Fix a11y issues            ◀──
-                            ────────────────────
-                            Total: 5-8 days
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         FE AUTOMATION SYSTEM                                    │
+│                                                                                 │
+│  ┌─────────┐    ┌─────────────┐    ┌──────────────┐    ┌────────────────────┐  │
+│  │  FIGMA   │───▶│  EXTRACTION │───▶│  GENERATION  │───▶│   VERIFICATION    │  │
+│  │  (input) │    │  (tokens +  │    │  (Claude     │    │   (7 automated    │  │
+│  │          │    │   markup)   │    │   Code)      │    │    quality gates) │  │
+│  └─────────┘    └─────────────┘    └──────────────┘    └────────┬───────────┘  │
+│                                                                  │              │
+│                                                          pass ┌──┴──┐ fail     │
+│                                                               │     │          │
+│                                                               ▼     ▼          │
+│                                                           ┌──────┐ ┌────────┐  │
+│                                                           │REVIEW│ │AUTO-FIX│  │
+│                                                           │(human│ │(Claude │  │
+│                                                           │accept│ │retries)│  │
+│                                                           └──┬───┘ └────────┘  │
+│                                                              │                  │
+│                                                              ▼                  │
+│                                                         ┌─────────┐            │
+│                                                         │  SHIP   │            │
+│                                                         └─────────┘            │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Pain points:**
-1. **Design-to-code translation is manual and lossy** — engineers eyeball spacing, colors, and layout from Figma
-2. **Responsive behavior is guessed** — designers create 1-2 breakpoints, engineers improvise the rest
-3. **Tests are an afterthought** — skipped under time pressure, bugs found late
-4. **Visual QA is a ping-pong loop** — "this doesn't match the design" back-and-forth
-5. **Accessibility is bolted on** — caught by audits months later, expensive to fix
-
 ---
 
-## Proposed State: The Automated Pipeline
+## System Components
+
+### Component 1: Figma Input Layer
+
+The system requires structured Figma files. This is the contract between Design and the pipeline.
+
+**Figma file requirements:**
+
+| Requirement | What It Enables Downstream |
+|-------------|---------------------------|
+| Auto Layout on all frames | Direct translation to CSS Flexbox/Grid |
+| Figma Variables for colors, spacing, typography | Auto-extraction of design tokens |
+| Meaningful layer names (`header-nav`, not `Frame 47`) | Layer names → component/class names |
+| Components for reused elements | Maps to React components |
+| Breakpoint variants (375px, 768px, 1440px) | Responsive behavior is explicit, not guessed |
+| "Ready for dev" status on completed frames | Triggers pipeline |
+
+**Figma file structure:**
 
 ```
-Designer (2-3 days)     Spec Writer (0.5 day)     AI Pipeline (hours)      Human (0.5 day)
-─────────────────      ──────────────────────     ──────────────────       ───────────────
-Figma design           Component specs            Extract tokens    ──▶   Review in Storybook
-Structured with:       Screen state machines      Generate markup   ──▶   Accept or reject
- • Auto Layout         Acceptance criteria        Claude refactors  ──▶   Merge + deploy
- • Variables                                      Writes tests
- • Named layers                                   Writes stories
- • Breakpoints                                    Runs verification:
-                                                   ✓ Type check
-                                                   ✓ Lint
-                                                   ✓ Unit tests
-                                                   ✓ E2E tests
-                                                   ✓ Visual regression
-                                                   ✓ Accessibility audit
-                                                   ✓ Build
-                                                  ──────────────────
-                                                  Total: 2-4 hours
+📁 Project
+├── 📁 Design System
+│   ├── Variables (colors, spacing, radius, shadows)
+│   ├── Text Styles (heading-xl, body-md, caption, ...)
+│   └── Components (Button, Input, Card, Modal, ...)
+├── 📁 Screens
+│   ├── [Screen] — Desktop (1440px)
+│   ├── [Screen] — Tablet (768px)
+│   └── [Screen] — Mobile (375px)
+└── 📁 Prototypes (user flows)
 ```
 
-**What changes:**
+### Component 2: Extraction Layer
 
-| Today | Proposed |
-|-------|----------|
-| Engineer translates Figma → code (days) | AI generates code from structured Figma (hours) |
-| Tests written after code (or skipped) | Tests written first by AI, code must pass them |
-| Visual QA is manual | Automated screenshot comparison against Figma |
-| Accessibility is an afterthought | Automated a11y audit blocks every commit |
-| One engineer, one feature, one sprint | One engineer supervises multiple features in parallel |
+Two extraction pipelines run from the Figma file:
+
+#### 2a. Design Token Sync (Automated)
+
+```
+Figma Variables ──▶ Figma REST API ──▶ tokens.ts
+```
+
+A script calls `GET /v1/files/:key/variables/local`, transforms Figma Variables into a TypeScript const object:
+
+```typescript
+// Auto-generated from Figma — do not edit
+export const tokens = {
+  color: {
+    primary: '#2563EB',
+    error: '#DC2626',
+    text: { primary: '#111827', secondary: '#6B7280' },
+    bg: { page: '#FFFFFF', surface: '#F9FAFB' },
+  },
+  spacing: { xs: '4px', sm: '8px', md: '16px', lg: '24px', xl: '32px' },
+  radius: { sm: '4px', md: '8px', lg: '16px', full: '9999px' },
+  fontSize: { sm: '14px', md: '16px', lg: '20px', xl: '24px' },
+} as const;
+```
+
+This runs on-demand or via webhook when the Figma file is published. Tokens flow into Tailwind config and component code — no hardcoded values anywhere.
+
+#### 2b. Markup Export (Semi-automated)
+
+```
+Figma frames ──▶ Figma-to-Code plugin ──▶ raw Tailwind HTML
+```
+
+The **Figma to Code** plugin exports selected frames as Tailwind HTML. This produces flat, unstyled markup — the structural skeleton, not production code.
+
+Alternative: **Figma Dev Mode** for manual inspection of individual elements (useful for complex interactions that plugins don't capture).
+
+#### 2c. Screenshot Export (Automated)
+
+```
+Figma frames ──▶ Figma REST API (image export) ──▶ reference screenshots
+```
+
+`GET /v1/files/:key/images?ids=:ids&format=png` exports frame screenshots. These become the **visual regression baseline** — the system compares rendered components against these Figma screenshots.
+
+### Component 3: Specification Layer
+
+Engineers write lightweight specs that tell Claude **what to build**, not **how to build it**.
+
+#### Component Spec (per component)
+
+```markdown
+## SearchBar
+Props: placeholder (string), onSearch ((q: string) => void), debounceMs (number)
+States: idle → typing → loading → results | error | empty
+Accessibility: role=search, aria-label on input, aria-live on results
+```
+
+#### Screen Spec (per page)
+
+```markdown
+## /products
+States: loading → ready | error | empty
+Components: SearchBar (top), ProductGrid (main), FilterSidebar (left, hidden on mobile)
+URL state: ?q= (search), ?category= (filter), ?page= (pagination)
+Responsive: mobile=stack, tablet=2-col no sidebar, desktop=3-col with sidebar
+```
+
+#### Spec input format
+
+Templates with fill-in-the-blank structure. An engineer writes a spec in ~30 minutes per screen — not code, just structured requirements.
+
+### Component 4: Generation Layer (Claude Code)
+
+Claude Code receives four inputs and produces production code:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  CLAUDE CODE INPUT                    │
+│                                                       │
+│  1. tokens.ts ────────── design constraints           │
+│  2. Raw Tailwind HTML ── structural skeleton          │
+│  3. Component/Screen specs ── behavioral requirements │
+│  4. CLAUDE.md ─────────── project conventions         │
+│                                                       │
+└───────────────────────┬─────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│                  CLAUDE CODE OUTPUT                   │
+│                                                       │
+│  components/                                          │
+│  ├── SearchBar.tsx ──────── component implementation   │
+│  ├── SearchBar.test.tsx ─── unit + interaction tests  │
+│  └── SearchBar.stories.tsx ─ all states in Storybook  │
+│                                                       │
+│  app/products/                                        │
+│  ├── page.tsx ───────────── page integration           │
+│  └── page.test.tsx ──────── page-level tests          │
+│                                                       │
+│  e2e/                                                 │
+│  └── products.spec.ts ───── E2E user flow tests       │
+│                                                       │
+└─────────────────────────────────────────────────────┘
+```
+
+**Generation rules enforced via CLAUDE.md:**
+- All colors/spacing/typography must reference `tokens.ts` — no hardcoded values
+- Every component must have a test file and a Storybook story
+- Tests are written before implementation (TDD)
+- Components must pass a11y checks (ARIA, keyboard nav, screen reader)
+- Responsive behavior must match spec breakpoints
+
+**Self-correction loop:** If tests fail after generation, Claude reads the error, fixes the code, and retries — up to 10 iterations before escalating to a human.
+
+### Component 5: Verification Layer
+
+Seven automated gates run on every commit. All must pass before human review.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      VERIFICATION PIPELINE                        │
+│                                                                    │
+│  Gate 1: tsc --noEmit ────────────────── Type safety              │
+│  Gate 2: eslint --max-warnings 0 ─────── Code standards           │
+│  Gate 3: vitest run ──────────────────── Unit + integration tests │
+│  Gate 4: next build ──────────────────── Production build         │
+│  Gate 5: playwright test ─────────────── E2E user flows           │
+│  Gate 6: playwright screenshots ──────── Visual regression        │
+│          vs. Figma reference images      (pixel comparison)       │
+│  Gate 7: axe-core ────────────────────── Accessibility audit      │
+│                                                                    │
+│  Optional: lighthouse ────────────────── Performance (advisory)   │
+│                                                                    │
+│  ALL PASS ──▶ PR created ──▶ Human review in Storybook            │
+│  ANY FAIL ──▶ Claude auto-fix ──▶ retry ──▶ escalate if stuck     │
+│                                                                    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Visual regression detail:** Playwright renders each component/page at 3 viewports (375px, 768px, 1440px), takes screenshots, and compares against Figma-exported reference images. Pixel diff > threshold = fail.
+
+### Component 6: Review & Accept Layer
+
+Human review is scoped to two things:
+
+1. **Storybook review** — Does it look right? Check all component states, responsive variants
+2. **Diff review** — Is the code clean? Check architecture, naming, patterns
+
+The engineer does NOT need to:
+- Run the app locally and click through it
+- Check responsive behavior manually
+- Run tests manually
+- Check accessibility manually
+
+All of that is already verified by the pipeline.
+
+### Component 7: Recovery Layer
+
+When verification fails and Claude can't self-fix:
+
+```
+Level 1: Self-heal ── Claude reads error, fixes code, retries (up to 10x)
+Level 2: Decompose ── Break the task into smaller pieces, retry each
+Level 3: Escalate ─── Log full context (error, attempted fixes, spec) for human
+Level 4: Learn ────── Human fix gets written back to CLAUDE.md to prevent recurrence
+```
 
 ---
 
-## How It Works: 4-Step Pipeline
+## End-to-End Flow (Single Feature)
 
-### Step 1: Structured Figma Input (Designer)
+```
+                    DESIGNER                    ENGINEER                    SYSTEM
+                    ────────                    ────────                    ──────
 
-Designers follow a set of Figma discipline rules:
-- **Auto Layout everywhere** (translates directly to Flexbox)
-- **Figma Variables for all tokens** (colors, spacing, typography auto-export to code)
-- **Named layers** (become component/class names)
-- **Breakpoint variants** (375px, 768px, 1440px)
-
-This is the highest-leverage investment. Clean Figma input makes everything downstream 10x better.
-
-### Step 2: Spec Layer (Engineer, 30 min per screen)
-
-Engineer writes lightweight specs — not code, just structured requirements:
-- **Component spec:** props, states, transitions, accessibility
-- **Screen spec:** state machine, responsive behavior, data dependencies
-- **Acceptance criteria:** what "done" looks like
-
-Templates are provided — fill in the blanks, not write from scratch.
-
-### Step 3: AI Code Generation (Claude Code, automated)
-
-Claude Code receives:
-1. Design tokens (auto-extracted from Figma Variables via API)
-2. Raw Tailwind markup (exported via Figma plugin)
-3. Component + screen specs
-4. Project context (CLAUDE.md — conventions, patterns, dependencies)
-
-Claude produces:
-- React/Next.js components with TypeScript
-- Unit tests (Vitest) for every component
-- E2E tests (Playwright) for user flows
-- Storybook stories for visual review
-- Responsive layouts matching breakpoint specs
-
-### Step 4: Automated Verification (CI)
-
-Every commit passes through 7 gates before it's reviewable:
-
-| Gate | Tool | Blocks merge? |
-|------|------|--------------|
-| Type check | TypeScript compiler | Yes |
-| Lint | ESLint | Yes |
-| Unit tests | Vitest | Yes |
-| Build | Next.js build | Yes |
-| E2E tests | Playwright | Yes |
-| Visual regression | Playwright screenshots | Yes |
-| Accessibility | axe-core | Yes |
-
-Only after all gates pass does a human review. The human reviews **in Storybook** (visual) and **the diff** (code) — not in a browser debugging layout.
-
----
-
-## Investment Required
-
-### One-Time Setup (1-2 weeks)
-
-| Item | Effort | Who |
-|------|--------|-----|
-| Figma discipline training for designers | 2 hours workshop | Design lead |
-| Figma token sync script (API → tokens.ts) | 1 day | Engineer |
-| Spec templates (component, screen, tokens) | Done (in repo) | — |
-| CI verification pipeline (7 gates) | 2-3 days | Engineer |
-| Storybook + Chromatic setup | 1 day | Engineer |
-| Playwright visual test infrastructure | 1 day | Engineer |
-| CLAUDE.md project brain for pilot project | 0.5 day | Engineer |
-
-### Per-Feature Cost (Ongoing)
-
-| Role | Time per screen | What they do |
-|------|----------------|-------------|
-| Designer | 2-3 days | Design in Figma (same as today, but structured) |
-| Engineer | 30 min | Write component + screen specs from templates |
-| AI (Claude) | 1-2 hours | Generate all code, tests, stories |
-| Engineer | 30-60 min | Review Storybook + diff, accept or request changes |
-| **Total** | **~3 days** | vs. **8-12 days today** |
-
-### Tool Costs
-
-| Tool | Cost | Purpose |
-|------|------|---------|
-| Claude Code (Pro) | $200/mo per engineer | AI code generation |
-| Figma (existing) | Already paid | Design tool |
-| Chromatic | Free tier (5K snapshots/mo) | Visual regression |
-| Playwright | Free (open source) | E2E + screenshot tests |
+                    Design in Figma
+                    (Auto Layout +
+                     Variables +
+                     Named layers)
+                         │
+                         │ "Ready for dev"
+                         ▼
+                                                Write specs
+                                                (component +
+                                                 screen, ~30min)
+                                                     │
+                                                     │ commit specs
+                                                     ▼
+                                                                     Token sync
+                                                                     (Figma API → tokens.ts)
+                                                                            │
+                                                                     Markup export
+                                                                     (plugin → raw HTML)
+                                                                            │
+                                                                     Claude Code generates:
+                                                                     • Components (.tsx)
+                                                                     • Tests (.test.tsx)
+                                                                     • Stories (.stories.tsx)
+                                                                     • Page integration
+                                                                            │
+                                                                     Verification (7 gates)
+                                                                            │
+                                                                     ┌──────┴──────┐
+                                                                     │             │
+                                                                  PASS          FAIL
+                                                                     │          Auto-fix
+                                                                     │          retry
+                                                                     ▼             │
+                                                Review PR             │
+                                                (Storybook +          │
+                                                 diff only)◀──────────┘
+                                                     │
+                                            Accept ──┤── Request changes
+                                                     │   (Claude fixes)
+                                                     ▼
+                    Review in                   Merge + deploy
+                    Storybook
+                    "looks right" ✓
+```
 
 ---
 
-## Phased Rollout
+## Technical Stack
 
-| Phase | Duration | Scope | Success Criteria |
-|-------|----------|-------|-----------------|
-| **Pilot** | 2 weeks | 1 feature, 1 engineer | Feature ships in < 50% of normal time |
-| **Phase 1** | 1 month | All new FE features for 1 project | 3x speed improvement measured |
-| **Phase 2** | 2 months | All FE projects | Team-wide adoption, process documented |
-| **Phase 3** | Ongoing | Continuous improvement | < 5% human intervention rate |
-
-### Pilot Feature Selection Criteria
-
-Choose a feature that is:
-- [ ] New (not a refactor of existing code)
-- [ ] 3-5 screens (enough to validate, not too risky)
-- [ ] Has clear design in Figma already
-- [ ] Not on a critical deadline (room to learn)
-
----
-
-## Risk Assessment
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| AI generates wrong UI | Medium | Low | Design tokens constrain styling; Storybook review catches mismatches before merge |
-| Designers resist Figma discipline | Medium | High | Frame as "your designs get built faster and more accurately" — it's in their interest |
-| Spec writing feels like overhead | Low | Medium | Templates reduce it to 30 min fill-in-the-blanks; show time saved downstream |
-| AI cost at scale | Low | Low | $200/mo vs. days of engineer time — ROI is immediate |
-| Generated code quality concerns | Medium | Medium | Automated test coverage (80%+) + human review; quality is measurable, not subjective |
-| Edge cases AI can't handle | Medium | Low | Escalation protocol — AI logs context, human takes over; fix feeds back to prevent recurrence |
+| Layer | Tool | Role in System |
+|-------|------|---------------|
+| Design | Figma | Single source of design truth |
+| Token extraction | Figma REST API | Variables → `tokens.ts` |
+| Markup extraction | Figma-to-Code plugin | Frames → raw Tailwind HTML |
+| Screenshot baseline | Figma REST API (image export) | Reference images for visual regression |
+| Code generation | Claude Code | Specs + tokens + markup → production components |
+| Framework | Next.js (App Router) | File-based routing, minimal wiring |
+| Styling | Tailwind CSS | Utility classes, constrained by tokens |
+| UI primitives | Radix UI / shadcn/ui | Accessible components, composable |
+| Unit tests | Vitest | Fast, TypeScript-native |
+| E2E tests | Playwright | Cross-browser, visual screenshots |
+| Visual regression | Playwright screenshots | Compare rendered vs. Figma reference |
+| Accessibility | axe-core + eslint-plugin-jsx-a11y | Automated a11y audit |
+| Component review | Storybook | Isolated visual review for all states |
+| CI | GitHub Actions | Run 7 verification gates |
+| Project context | CLAUDE.md | Persistent project knowledge for AI |
 
 ---
 
-## Success Metrics
+## Feasibility Assessment
 
-| Metric | Current Baseline | Phase 1 Target | Phase 2 Target |
-|--------|-----------------|----------------|----------------|
-| Design-to-PR time | 5-8 days | 2-3 days | 1-2 days |
-| Test coverage | ~40% (estimated) | 80%+ | 80%+ |
-| Visual bugs found in QA | ~5 per feature | < 2 | < 1 |
-| Accessibility issues at launch | Often caught late | Zero (gated) | Zero (gated) |
-| Features per engineer per sprint | 1 | 2-3 | 3-5 |
+### What Works Today (Proven)
+
+| Capability | Status | Evidence |
+|-----------|--------|---------|
+| Figma REST API token extraction | Production-ready | API is stable, Variables endpoint available |
+| Figma-to-Code Tailwind export | Usable | Open source plugin, clean output for Auto Layout files |
+| Claude Code generating React components from specs | Proven | Used in current projects (MewtwoAI: 747 tests, FinancialAssistant: 51 tests) |
+| TDD with Claude (tests first, then implementation) | Proven | Standard workflow in our projects |
+| Automated verification (typecheck + lint + test + build) | Proven | Already running in our projects |
+| Storybook for component review | Mature | Industry standard, well-supported |
+
+### What Needs Building (1-2 weeks)
+
+| Component | Effort | Complexity |
+|-----------|--------|-----------|
+| Figma token sync script | 1 day | Low — REST API call + JSON transform |
+| Visual regression with Figma screenshots as baseline | 2-3 days | Medium — Playwright screenshot comparison, threshold tuning |
+| CI pipeline with 7 gates | 2 days | Low — standard GitHub Actions |
+| Storybook + Chromatic integration | 1 day | Low — well-documented setup |
+| Spec templates + CLAUDE.md for pilot project | 0.5 day | Low — templates already drafted |
+| Figma discipline guide for designers | 0.5 day | Low — documentation + 1 training session |
+
+### Open Questions
+
+| Question | Impact | How to Resolve |
+|----------|--------|---------------|
+| How accurate is Figma-to-Code plugin output for our designs? | High | Test with 3 existing screens — measure cleanup effort |
+| What's the right pixel-diff threshold for visual regression? | Medium | Empirical — run on existing components, tune to avoid false positives |
+| Can Claude handle complex interactive patterns (drag-drop, animations)? | Medium | Test during pilot — scope pilot to avoid these initially |
+| Will designers adopt Figma discipline? | High | Design lead buy-in required — frame as "your designs get built accurately" |
 
 ---
 
-## What This Enables Long-Term
+## Pilot Plan
 
-1. **Engineers become force multipliers** — one engineer supervises 3-5 AI-driven features in parallel instead of coding one
-2. **Design-code fidelity goes up** — tokens from Figma flow directly into code, no manual translation
-3. **Quality becomes a gate, not a phase** — tests, a11y, and visual checks happen on every commit, not after QA
-4. **Onboarding gets faster** — new engineers read CLAUDE.md and specs, not tribal knowledge
-5. **Designers get faster feedback** — Storybook preview in hours, not days
+**Scope:** 1 feature, 3-5 screens, 1 engineer, 2 weeks.
+
+**Week 1:**
+- Set up infrastructure (token sync, CI gates, Storybook)
+- Designer structures Figma file per requirements
+- Engineer writes specs for all screens
+
+**Week 2:**
+- Run full pipeline: extract → generate → verify → review
+- Measure: time spent, intervention rate, code quality
+- Document: what worked, what broke, what to change
+
+**Pilot output:** Data on feasibility + refined system design for Phase 1.
 
 ---
 
-## Ask
+## System Boundaries
 
-1. **Approve a 2-week pilot** with one engineer and one feature
-2. **Align with Design lead** on Figma discipline requirements
-3. **Review results** at end of pilot — decide on Phase 1 expansion
+What this system **does:**
+- Generate UI components from Figma designs + specs
+- Produce comprehensive tests (unit, E2E, visual, a11y)
+- Verify code quality through automated gates
+- Maintain design-code fidelity via token sync
 
----
-
-*Appendix: Technical details, templates, and workflow reference are in the [frontend-engineering/](.) directory of the Autonomous-Dev-Workflow repo.*
+What this system **does not:**
+- Replace product/design decisions (humans define what to build)
+- Handle backend/API implementation (separate workflow)
+- Auto-deploy to production without human approval
+- Work with unstructured Figma files (garbage in = garbage out)
