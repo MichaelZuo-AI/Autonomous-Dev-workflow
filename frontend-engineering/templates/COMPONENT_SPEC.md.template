@@ -1,0 +1,47 @@
+# Component: [ComponentName]
+
+## Overview
+[One-line description of what this component does]
+
+## Props
+
+| Prop | Type | Default | Required | Description |
+|------|------|---------|----------|-------------|
+| [propName] | [type] | [default] | [yes/no] | [description] |
+
+## States
+
+| State | Description | Visual |
+|-------|-------------|--------|
+| idle | [description] | [what the user sees] |
+| loading | [description] | [what the user sees] |
+| error | [description] | [what the user sees] |
+| [state] | [description] | [what the user sees] |
+
+## State Transitions
+
+- GIVEN [state] WHEN [event] THEN [new state]
+- GIVEN [state] WHEN [event] THEN [new state]
+
+## Responsive Behavior
+
+| Breakpoint | Behavior |
+|-----------|----------|
+| Mobile (< 640px) | [behavior] |
+| Tablet (640-1024px) | [behavior] |
+| Desktop (> 1024px) | [behavior] |
+
+## Accessibility
+
+- Role: [landmark/widget role]
+- Keyboard: [keyboard interactions]
+- Screen reader: [aria attributes, announcements]
+
+## Acceptance Criteria
+
+- [ ] All states render correctly
+- [ ] All transitions work as specified
+- [ ] Responsive behavior matches spec
+- [ ] Accessibility audit passes
+- [ ] Storybook story covers all states
+- [ ] Unit tests cover all transitions

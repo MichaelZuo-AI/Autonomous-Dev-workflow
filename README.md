@@ -25,6 +25,13 @@ This repo contains the methodology, templates, and tooling for an AI-driven deve
 ├── docs/
 │   └── workflow.md               # Full 5-layer workflow reference
 │
+├── frontend-engineering/         # FE-specific autonomous dev workflow
+│   ├── README.md                 # FE strategy: visual verification, components, a11y
+│   └── templates/
+│       ├── COMPONENT_SPEC.md.template   # Component props, states, behavior
+│       ├── SCREEN_SPEC.md.template      # Page state machine + responsive layout
+│       └── DESIGN_TOKENS.md.template    # Design token contract
+│
 ├── templates/                    # Reusable templates for any project
 │   ├── CLAUDE.md.template        # Project brain template
 │   ├── HANDOFF.md.template       # Cross-session handoff template

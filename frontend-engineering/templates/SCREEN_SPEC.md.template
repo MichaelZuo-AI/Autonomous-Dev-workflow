@@ -1,0 +1,84 @@
+# Screen: [ScreenName]
+
+## Overview
+[One-line description of what this screen/page does]
+
+## URL
+`[/path/:param]`
+
+## State Machine
+
+```
+[ASCII state diagram showing all screen states and transitions]
+```
+
+| State | Description | Data Required |
+|-------|-------------|---------------|
+| loading | [description] | none |
+| ready | [description] | [data shape] |
+| error | [description] | [error info] |
+| empty | [description] | none |
+| [state] | [description] | [data] |
+
+## Components Used
+
+| Component | Location | Props Passed |
+|-----------|----------|-------------|
+| [ComponentName] | [where on screen] | [key props] |
+
+## Layout
+
+### Desktop (> 1024px)
+```
+┌──────────────────────────────────────┐
+│ Header                                │
+├──────────┬───────────────────────────┤
+│ Sidebar  │ Main Content              │
+│          │                           │
+│          │                           │
+├──────────┴───────────────────────────┤
+│ Footer                                │
+└──────────────────────────────────────┘
+```
+
+### Mobile (< 640px)
+```
+┌──────────────────┐
+│ Header + Menu ☰  │
+├──────────────────┤
+│ Main Content     │
+│                  │
+│                  │
+├──────────────────┤
+│ Bottom Nav       │
+└──────────────────┘
+```
+
+## User Interactions
+
+| Action | Trigger | Result |
+|--------|---------|--------|
+| [action] | [click/swipe/key] | [what happens] |
+
+## URL State Mapping
+
+| URL Param | State | Default |
+|-----------|-------|---------|
+| ?tab= | Active tab | "overview" |
+| ?q= | Search query | "" |
+| ?page= | Pagination | 1 |
+
+## Data Dependencies
+
+| Source | Endpoint / Query | Caching |
+|--------|-----------------|---------|
+| [API/store] | [endpoint] | [strategy] |
+
+## Acceptance Criteria
+
+- [ ] All screen states render correctly
+- [ ] URL state is preserved on refresh
+- [ ] Responsive layout matches spec at all breakpoints
+- [ ] Loading/error/empty states handled
+- [ ] E2E test covers primary user flow
+- [ ] Screenshot tests pass for all viewports
